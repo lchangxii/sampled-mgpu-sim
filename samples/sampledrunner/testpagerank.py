@@ -22,10 +22,10 @@ def run_bench_with_sampled(analysis_name):
     return len(kernels)
 benchmarks["pagerank"] = []
 
-#pagerankparams=[8192,16384,32768,65536]
+pagerankparams=[8192,16384,32768,65536]
 
-#pagerankparams=extend(pagerankparams)
-pagerankparams = [8192]
+pagerankparams=extend(pagerankparams)
+#pagerankparams = [8192]
 for param in pagerankparams:
     benchmarks["pagerank"].append("./pagerank -node %d "%param)
 
