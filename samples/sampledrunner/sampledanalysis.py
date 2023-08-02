@@ -66,7 +66,7 @@ class GPUBBV:
             gpubbv2 = other.gpubbv + ( [0] * (len(self.gpubbv) - len(other.gpubbv)  ))
             
         dis = math.dist( gpubbv1 , gpubbv2)
-        print(dis)
+        #print(dis)
         if dis < threshold:
             return dis,True
         else:

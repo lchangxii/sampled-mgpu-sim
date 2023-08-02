@@ -5,6 +5,7 @@ benchmarks_test=["matrixmultiplication"]
 #patterns_test=["matrixmultiplication"]
 import os
 
+from testengine import RunBench,add_bench,results_name,remove_special_charactor
 def extend(params_old):
     params=[]
     params.append( params_old[0] )
@@ -78,13 +79,6 @@ spmvparams=extend(spmvparams)
 for param in spmvparams:
     benchmarks["spmv"].append("./spmv -dim %d"%param)
 
-benchmarks["pagerank"] = []
-
-pagerankparams=[8192,16384,32768,65536]
-
-pagerankparams=extend(pagerankparams)
-for param in pagerankparams:
-    benchmarks["pagerank"].append("./pagerank -node %d "%param)
 
 benchmarks["bfs"] = []
 
@@ -130,48 +124,10 @@ for bench,benchcmds in benchmarks.items():
 parameters = dict()
 cwd=os.getcwd()
 root_path = os.path.join(cwd,"..")
-results_name = dict()
-results_name["full"] = "result.json"
-results_name["inscount"] = "insnums.json"
-results_name["wgsampled"] = "sampled_result.json"
-results_name["branchsampled"] = "sampled_result.json"
-results_name["mixedsampled"] = "sampled_result.json"
-results_name["ipcsampled"] = "ipc_sampled_result.json"
-
-results_name["analysis"] = "bbv_feature.json"
 import copy
 
 
-hash2filename = dict()
-def remove_special_charactor(pattern_para):
-    paras=copy.copy(pattern_para).replace(" ","_")
-    paras=paras.replace("-","_")
-    paras=paras.replace(".","_")
-    paras=paras.replace("=","_")
-    paras=paras.replace("/","_")
-    return paras
 
-def add_bench(bench,binary,parameter, pattern_para,pattern,v=None):
-    list1= [ binary , parameter , pattern_para]
-    #print(list1)
-    cmd1 = " ".join( list1)
-    
-    cmdparas = remove_special_charactor(binary)
-    pattern_paras=remove_special_charactor(pattern_para)
-
-    oriname = results_name[pattern]
-    oriname_rep=copy.copy(oriname).replace(".json","")
-    if v == None:
-        v=args.v
-    if v=="0":
-        final_name = oriname_rep +"_" + cmdparas+"_" + pattern_paras + ".json"
-    else:
-        final_name = oriname_rep +"_" + cmdparas+"_" + pattern_paras+"_v"+v + ".json"
-
-    print(final_name)
-    hash2filename[hash( cmd1 )] = final_name
-#    os.system(cmd1)
-    return final_name,cmd1
 from sampledipc import processjson,extrapolate
 def check_full_data( file_name ):
     data = processjson( file_name )
@@ -207,41 +163,14 @@ home_dir = os.getenv('HOME')
 result_dir=os.path.join(home_dir,"gpudata")
 from my_utils import check_dir
 check_dir(result_dir)
-import tempfile
-class RunBench:
-    def __init__(self,command,result_name,final_name,binary_dir):
-        self.command = command
-        self.result_name = result_name
-        self.final_name = os.path.join(result_dir,final_name)
-        self.binary_dir = binary_dir
-    def RunCommand(self):
-
-        tmpdir_real=tempfile.TemporaryDirectory()
-        tmpdir = tmpdir_real.name
-        ###first copy all binary to this temperary directory
-        print(tmpdir) 
-        copy_binary_command = "cp -r %s/* %s"%(self.binary_dir,tmpdir)
-        ##change workdir to tmpdir
-        os.chdir( tmpdir )
-        
-        os.system(copy_binary_command)
-
-        ##run command
-        os.system(self.command)
-        ##copy final result to gpudata directory
-        copy_result_command = "mv %s %s"%(self.result_name,self.final_name) 
-        #print(copy_result_command)
-        
-        os.system(copy_result_command)
-        tmpdir_real.cleanup()
-        ## print(tmpdir)
-
 
 allcommands = []
 def run_cmd(command,result_name,final_name,binary_dir):
     allcommands.append( RunBench(command,result_name,final_name,binary_dir) )
 
 from sampledanalysis import bbvanalysis
+benchid=-1
+first_row = ["benchmark-command"]
 for bench,bench_cmds in benchmarks.items():
 #    if bench not in benchmarks_test:
 #        continue
@@ -255,6 +184,7 @@ for bench,bench_cmds in benchmarks.items():
     if type(bench_cmds) != list:
         bench_cmds = [bench_cmds]
     for bench_cmd in bench_cmds:
+        benchid += 1
         output_each_bench = [bench_cmd]
         for pattern in pattern_order:
             if args.mode[0] != "all":
@@ -263,8 +193,8 @@ for bench,bench_cmds in benchmarks.items():
 
             for pattern_parameter in pattern_parameters_dict[pattern]:
                 final_name,cmd = add_bench( bench, bench_cmd,"",pattern_parameter,pattern )
+                final_name = os.path.join(result_dir,final_name)
                 if args.check:
-                    final_name = os.path.join(result_dir,final_name)
 
                     if pattern == "ipcsampled" :
                         pattern_parameter = pattern_parameters_dict["inscount"][0]
@@ -290,6 +220,17 @@ for bench,bench_cmds in benchmarks.items():
                             walltime = sum(walltimes)
                     else:
                         simtime,walltime = check_data( final_name,pattern,inscountfinal_name)
+                        if benchid == 0:
+                            if pattern == "mixedsampled":
+                                first_row += [ "Photon-Simtime","Photon-Walltime" ]
+                            elif pattern == "full":
+                                first_row += [ "MGPUSim-Simtime","MGPUSim-Walltime" ]
+                            elif pattern == "branchsampled":
+                                first_row += [ "BB-Simtime","BB-Walltime" ]
+
+                            elif pattern == "wgsampled":
+                                first_row += [ "Warp-Simtime","Warp-Walltime" ]
+
                     if pattern not in ["inscount"]:
                         output_each_bench.append( str(simtime))
                         output_each_bench.append( str(walltime))
@@ -317,6 +258,7 @@ if not args.check:
 #        run_command(command)
         
 
+print( "\t".join(first_row) )
 for output_each_bench in output_all:
     print( "\t".join(output_each_bench) )
 
