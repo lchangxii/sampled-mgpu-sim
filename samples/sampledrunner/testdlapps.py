@@ -40,7 +40,7 @@ def get_args():
 
     parser.add_argument("--check" ,action="store_true" , default=False,help=" check the final result")
     parser.add_argument("--force" ,action="store_true" , default=False,help=" force to execute")
-    parser.add_argument("--mode",type=str   ,nargs='+', default="all",help=" execution modes, including photon, kernelSampled, warpKernelSampled,full ")
+    parser.add_argument("--mode",type=str   ,nargs='+', default=["all"],help=" execution modes, including photon, kernelSampled, warpKernelSampled,full ")
     parser.add_argument("--bench",type=str   , default="vgg16",help=" benchmarks to execute, support vgg16,vgg19,resnet18,resnet32,resnet50,resnet101,resnet152")
     parser.add_argument("--arch",type=str   , default="r9nano",help="archtecture to simulate")
     parser.add_argument("--v",type=str   , default="0",help="version")
@@ -272,7 +272,7 @@ def run_bench_with_param( bench,bench_cmd ,bench_i):
                  #   exit(1)
                 if (not isExisting) or args.force:
                     run_cmd(cmd,results_name[pattern],final_name,binary_dir)
-            if len(output_all) < bench_i:
+            if len(output_all) <= bench_i:
                 output_all.append(output_each_bench)
             else:
                 output_all[bench_i] += output_each_bench
@@ -368,7 +368,7 @@ for bench,bench_cmd in benchparams:
         if args.bench=="vgg16":
             allmode = pattern_printorder
         else:
-            allmode = ["photon","full"]
+            allmode = ["full","photon"]
     else:
         allmode = args.mode
     if args.check:

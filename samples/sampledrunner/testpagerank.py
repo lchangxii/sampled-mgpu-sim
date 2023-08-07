@@ -30,6 +30,18 @@ for param in pagerankparams:
     benchmarks["pagerank"].append("./pagerank -node %d "%param)
 
 general_parameter=["-magic-memory-copy"]
+
+general_parameter=" ".join(general_parameter)
+for bench,benchcmds in benchmarks.items():
+    if type(benchcmds ) != list:
+        benchcmds = [benchcmds]
+        benchmarks[bench] = benchcmds
+    for idx,benchcmd in enumerate(benchcmds):
+        #print(benchcmd)
+        benchmarks[bench][idx] = " ".join([ benchcmd, general_parameter] )
+
+
+
 allcommands = []
 
 pattern_parameters_dict = dict()
@@ -43,7 +55,7 @@ def get_args():
 
     parser.add_argument("--check" ,action="store_true" , default=False,help=" check the final result")
     parser.add_argument("--force" ,action="store_true" , default=False,help=" force to execute")
-    parser.add_argument("--mode",type=str   ,nargs='+', default="all",help=" execution mode; photon or full ")
+    parser.add_argument("--mode",type=str   ,nargs='+', default=["all"],help=" execution mode; photon or full ")
     parser.add_argument("--bench",type=str   , default="pagerank",help=" benchmarks to execute")
     parser.add_argument("--arch",type=str   , default="r9nano",help="archtecture to simulate")
     parser.add_argument("--v",type=str   , default="0",help="version")
@@ -52,7 +64,7 @@ def get_args():
     return args
 
 args = get_args()
-
+print(args.mode)
 
 def run_cmd(command, result_name,final_name,binary_dir):
     allcommands.append( RunBench(command,result_name,final_name,binary_dir) )
@@ -151,10 +163,11 @@ for bench,bench_cmds in benchmarks.items():
                     final_name,cmd = add_bench( bench, bench_cmd,"",pattern_parameter,pattern )
                     final_name = os.path.join(result_dir,final_name)
                     simtime,walltime = check_data( final_name,pattern,None)
+                #print(simtime,walltime)
                 output_each_bench.append( str(simtime))
                 output_each_bench.append( str(walltime))
 
-
+            
             else:
                 if pattern == "full":
                     patterns = [pattern]
