@@ -47,7 +47,7 @@ def get_args():
     parser.add_argument("--n",type=int   , default=16,help="parallel workloads")
     args = parser.parse_args()
     if args.mode[0] == "all":
-        for pattern in pattern_order:
+        for pattern in pattern_printorder:
             mode2execute.add(pattern)
     else:
         for pattern in args.mode:
@@ -364,9 +364,15 @@ elif args.bench=="resnet152":
     benchparams = run_resnet152(benchmarks)
 bench_i = 0
 for bench,bench_cmd in benchparams:
-        
+    if args.mode[0] == "all" :
+        if args.bench=="vgg16":
+            allmode = pattern_printorder
+        else:
+            allmode = ["photon","full"]
+    else:
+        allmode = args.mode
     if args.check:
-        for mode in args.mode:
+        for mode in allmode:
             if mode == "full":
                 kernelnum = run_bench_with_param( bench,bench_cmd,bench_i )
             elif mode in pattern_printorder:
