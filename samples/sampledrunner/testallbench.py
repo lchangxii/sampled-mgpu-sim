@@ -73,15 +73,15 @@ for param in spmvparams:
     benchmarks["spmv"].append("./spmv -dim %d"%param)
 
 
-benchmarks["bfs"] = []
-
-#pagerankparams=[8192,16384,32768,65536]
-#pagerankparams=[8192*8]
-pagerankparams=[8192*16]
-
-pagerankparams=extend(pagerankparams)
-for param in pagerankparams:
-    benchmarks["bfs"].append("./bfs -node %d --depth 1"%param)
+#benchmarks["bfs"] = []
+#
+##pagerankparams=[8192,16384,32768,65536]
+##pagerankparams=[8192*8]
+#pagerankparams=[8192*16]
+#
+#pagerankparams=extend(pagerankparams)
+#for param in pagerankparams:
+#    benchmarks["bfs"].append("./bfs -node %d --depth 1"%param)
 
 
 
