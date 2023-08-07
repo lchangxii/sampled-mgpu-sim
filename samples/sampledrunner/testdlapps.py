@@ -1,5 +1,4 @@
 #!/usr/bin/env python3.8
-##lenet
 import argparse
 import numpy as np
 benchmarks_test=["matrixmultiplication"]
@@ -33,64 +32,64 @@ pattern_parameters_dict["full"] = ["-timing"]
 pattern_parameters_dict["inscount"] = ["-collect-instnum"]
 
 pattern_parameters_dict["analysis"] = ["-only-analysis"]
-
-benchmarks = dict()
-benchmarks["conv2d"] = []
-batch=1
-enable_backward=False
-                ## in,  w,  h, co,kwh,pwh,stridewh
-convparams=[                                                     ##group       inner innerinner
-         [ batch,    1,28,28,  6,5,5,2,2,1,1,enable_backward ],  ## 1
-         [ batch,    6,14,14, 16,5,5,0,0,1,1,enable_backward ],  ## 1
-        ]
-for param in convparams:
-    cmd = "./conv2d -N %d -C %d -H %d -W %d -output-channel %d -kernel-height %d -kernel-width %d -pad-x %d -pad-y %d -stride-x %d -stride-y %d"%(param[0],param[1],param[2],param[3],param[4],param[5],param[6],param[7],param[8],param[9],param[10])
-    if param[11]:
-        cmd += " -enable-backward"
-    benchmarks["conv2d"].append( cmd )
-
-benchmarks["avgpooling"] = []
-params=[                                                           ##group inner
-         [ batch, 6,28,28, 6 ,2,2,0,0,2,2,enable_backward ],  ## 6
-         [ batch,16,14,14,16 ,2,2,0,0,2,2,enable_backward ],  ## 6
-        ]
-for param in params:
-    cmd = "./avgpooling -N %d -C %d -H %d -W %d -output-channel %d -kernel-height %d -kernel-width %d -pad-x %d -pad-y %d -stride-x %d -stride-y %d"%(param[0],param[1],param[2],param[3],param[4],param[5],param[6],param[7],param[8],param[9],param[10])
-    if param[11]:
-        cmd += " -enable-backward"
-    benchmarks["avgpooling"].append( cmd )
-
-
-
-benchmarks["fulllayer"] = []
-params=[                                               ##group inner
-         [ batch,  400, 120,enable_backward ],       ## 7,   0
-         [ batch,  120,  84,enable_backward ],       ## 7,   0
-         [ batch,   84,  10,enable_backward ],       ## 7,   0
-        ]
-for param in params:
-    cmd = "./fulllayer -N %d -input-dim %d -output-dim %d "%(param[0],param[1],param[2])
-    if param[-1]:
-        cmd += " -enable-backward"
-    benchmarks["fulllayer"].append( cmd )
-
-
-general_parameter=["-magic-memory-copy"]
-
+pattern_order = ["full","mixedsampled","wgsampled","analysis"]
+pattern_printorder = ["full","kernelSampled","warpKernelSampled","photon"]
+mode2execute = set()
 def get_args():
     parser = argparse.ArgumentParser(description="Executing All Benchmarks")
 
     parser.add_argument("--check" ,action="store_true" , default=False,help=" check the final result")
     parser.add_argument("--force" ,action="store_true" , default=False,help=" force to execute")
-    parser.add_argument("--mode",type=str   ,nargs='+', default="all",help=" execution mode")
-    parser.add_argument("--bench",type=str   , default="all",help=" benchmarks to execute")
+    parser.add_argument("--mode",type=str   ,nargs='+', default="all",help=" execution modes, including photon, kernelSampled, warpKernelSampled,full ")
+    parser.add_argument("--bench",type=str   , default="vgg16",help=" benchmarks to execute, support vgg16,vgg19,resnet18,resnet32,resnet50,resnet101,resnet152")
     parser.add_argument("--arch",type=str   , default="r9nano",help="archtecture to simulate")
     parser.add_argument("--v",type=str   , default="0",help="version")
     parser.add_argument("--n",type=int   , default=16,help="parallel workloads")
     args = parser.parse_args()
+    if args.mode[0] == "all":
+        for pattern in pattern_order:
+            mode2execute.add(pattern)
+    else:
+        for pattern in args.mode:
+            if pattern == "full":
+                mode2execute.add(pattern)
+            elif  pattern == "photon":
+                mode2execute.add("mixedsampled")
+                mode2execute.add("analysis")
+            elif pattern == "warpKernelSampled":
+                mode2execute.add("wgsampled")
+                mode2execute.add("analysis")
+            elif pattern == "kernelSampled":
+                mode2execute.add("full")
+                mode2execute.add("analysis") 
+            elif pattern == "analysis":
+                mode2execute.add("analysis") 
+
     return args
 
 args = get_args()
+
+from vgg16config import init_vgg16, run_vgg16
+from vgg19config import init_vgg19, run_vgg19
+from resnet18config import init_resnet18, run_resnet18
+from resnet34config import init_resnet34, run_resnet34
+from resnet50config import init_resnet50_101_152,run_resnet50,run_resnet101,run_resnet152
+if args.bench=="vgg16":
+    benchmarks = init_vgg16()
+elif args.bench=="vgg19":
+    benchmarks = init_vgg19()
+elif args.bench=="resnet18":
+    benchmarks = init_resnet18()
+elif args.bench=="resnet34":
+    benchmarks = init_resnet34()
+elif args.bench=="resnet50" or args.bench=="resnet101" or args.bench=="resnet152":
+    benchmarks = init_resnet50_101_152()
+else:
+    print("Unknow benchmarks, we only support vgg16/19 and resnet18/34/50/101/152 now")
+    print("If you want PageRank, run testpagerank.py script")
+    exit(0)
+general_parameter=["-magic-memory-copy"]
+
 
 
 if args.arch!="r9nano":
@@ -179,7 +178,6 @@ def check_data( file_name ,pattern,inscountfinal_name):
 
     return simtime,walltime 
 
-pattern_order = ["full","mixedsampled","wgsampled","branchsampled","analysis","inscount","ipcsampled"]
 output_all = []
 
 #from pathlib import Path
@@ -220,21 +218,26 @@ class RunBench:
 allcommands = []
 def run_cmd(command,result_name,final_name,binary_dir):
     allcommands.append( RunBench(command,result_name,final_name,binary_dir) )
-
-def run_bench_with_param( bench,bench_cmd ):
+simtimesum = dict()
+walltimesum = dict()
+patternvecs = []
+patternset = set()
+def run_bench_with_param( bench,bench_cmd ,bench_i):
     binary_dir=os.path.join(root_path,bench)
     os.chdir( binary_dir )
     if not args.check:
         os.system("go build")
 
-    output_each_bench = [bench_cmd]
-    for pattern in pattern_order:
-        if args.mode[0] != "all":
-            if pattern not in args.mode :
-                continue
-        elif pattern == "analysis":
-            continue
+    #output_each_bench = [bench_cmd]
+    output_each_bench = []
 
+
+    for pattern in pattern_order:
+        if pattern not in mode2execute:
+            continue
+        if pattern in pattern_printorder and pattern not in patternset:
+            patternvecs.append(pattern)
+            patternset.add(pattern)
         for pattern_parameter in pattern_parameters_dict[pattern]:
             final_name,cmd = add_bench( bench, bench_cmd,"",pattern_parameter,pattern )
             if args.check:
@@ -253,38 +256,57 @@ def run_bench_with_param( bench,bench_cmd ):
                 else:
                     inscountfinal_name = None
                 simtime,walltime = check_data( final_name,pattern,inscountfinal_name)
-                if pattern not in ["inscount"]:
+                if pattern == "full":
                     output_each_bench.append( str(simtime))
                     output_each_bench.append( str(walltime))
+                    if pattern not in simtimesum:
+                        simtimesum[pattern] = simtime
+                        walltimesum[pattern] = walltime
+                    else:
+                        simtimesum[ pattern ] += simtime
+                        walltimesum[ pattern ] += walltime
             else:
                 isExisting = os.path.exists( os.path.join(result_dir,final_name) )
+                #print(isExisting)
+                #if not isExisting:
+                 #   exit(1)
                 if (not isExisting) or args.force:
                     run_cmd(cmd,results_name[pattern],final_name,binary_dir)
-
-            output_all.append(output_each_bench)
+            if len(output_all) < bench_i:
+                output_all.append(output_each_bench)
+            else:
+                output_all[bench_i] += output_each_bench
 from sampledanalysis import ExecuteEngine
 execute_engine = ExecuteEngine()
-def run_bench_with_sampled( bench,bench_cmd,pattern,v ):
+def run_bench_with_sampled( bench,bench_cmd,pattern,bench_i ):
     binary_dir=os.path.join(root_path,bench)
     os.chdir( binary_dir )
 
     pattern_parameter = pattern_parameters_dict["analysis"][0]
-    analysis_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"analysis" ,v)
+    analysis_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"analysis", args.v )
     analysis_name = os.path.join(result_dir, analysis_name)
 #    print(analysis_name)
     kernels,walltimeanalysis = execute_engine.decompose_data( analysis_name ) 
     walltime = 0
     simtime = 0
-    if pattern == "kernelsampled":
+    if pattern  in pattern_printorder and pattern not in patternset:
+        patternvecs.append(pattern)
+        patternset.add(pattern)
+    pattern_in = pattern
+    if pattern == "kernelSampled":
         pattern = "full"
-    elif pattern == "sampled":
-    #    pattern = "mixedsampled"
+    elif pattern == "photon":
+        pattern = "mixedsampled"
+    elif pattern == "warpKernelSampled":
         pattern = "wgsampled"
+#    print("test",bench,bench_cmd)
     
-   
+    if "vgg"in args.bench and (bench == "fulllayer" and "25088" in bench_cmd) and pattern!="analysis":
+        pattern = "full"
+    
     pattern_parameter = pattern_parameters_dict[pattern][0]
     if pattern != "analysis":
-        full_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,pattern,v )
+        full_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,pattern,args.v )
 
         full_name = os.path.join(result_dir, full_name)
 
@@ -308,69 +330,85 @@ def run_bench_with_sampled( bench,bench_cmd,pattern,v ):
             execute_engine.update(  kernel )
         sampled.append(str(success))
     output= [simtime,walltime]
+
+    if pattern_in not in simtimesum.keys():
+        simtimesum[pattern_in] = simtime
+        walltimesum[pattern_in] = walltime
+    else:
+        simtimesum[ pattern_in ] += simtime
+        walltimesum[ pattern_in ] += walltime
+
     output = [str(elem)for elem in output]
     #output+=sampled + [str(elem) for elem in kernel_fulltimes ]
-    output_all.append(output )
+    if len(output_all) <= bench_i:
+        output_all.append(output)
+    else:
+        output_all[bench_i] += output
+
+    #output_all.append(output )
     return simtime,walltime
-print(args.bench)
-if args.bench=="lenet":
 
-    benchparams = [] 
-    conv2ds = benchmarks["conv2d"]
-    conv2d_1 = conv2ds[0]
-    conv2d_2 = conv2ds[1]
-
-    avgpoolings = benchmarks[ "avgpooling" ]
-    avgpooling_0 = avgpoolings[0]
-    avgpooling_1 = avgpoolings[1]
-
-    benchparams.append( ("conv2d", conv2d_1) )
-    benchparams.append( ("avgpooling", avgpooling_0) )
-    benchparams.append( ("conv2d", conv2d_2) )
-    benchparams.append( ("avgpooling", avgpooling_1) )
-
-
-    denselayers = benchmarks["fulllayer"]
-    benchparams.append( ("fulllayer", denselayers[0]) )
-    benchparams.append( ("fulllayer", denselayers[1]) )
-    benchparams.append( ("fulllayer", denselayers[2]) )
-    for bench,bench_cmd in benchparams:
-        if  (not args.check) or args.mode[0] == "full":
-            run_bench_with_param( bench,bench_cmd )
-        elif args.mode[0] in ["sampled" ,"kernelsampled" ,"analysis"]:
-            run_bench_with_sampled( bench,bench_cmd,args.mode[0],args.v )
-else:
-    for bench,bench_cmds in benchmarks.items():
-    #    if bench not in benchmarks_test:
-    #        continue
-        if args.bench != "all":
-            if args.bench != bench:
-                continue
-        if type(bench_cmds) != list:
-            bench_cmds = [bench_cmds]
-        for bench_cmd in bench_cmds:
-            run_bench_with_param( bench,bench_cmd )
-#                    print(cmd)
-#                    os.system(cmd)
-
-#                    oriname = results_name[pattern]
-#                    cmd1 = "mv %(oriname)s %(final_name)s"%locals()
-#                    print(cmd1) 
-#                    os.system(cmd1)
+if args.bench=="vgg16":
+    benchparams = run_vgg16(benchmarks)
+elif args.bench=="vgg19":
+    benchparams = run_vgg19(benchmarks)
+elif args.bench=="resnet18":
+    benchparams = run_resnet18(benchmarks)
+elif args.bench=="resnet34":
+    benchparams = run_resnet34(benchmarks)
+elif args.bench=="resnet50":
+    benchparams = run_resnet50(benchmarks)
+elif args.bench=="resnet101":
+    benchparams = run_resnet101(benchmarks)
+elif args.bench=="resnet152":
+    benchparams = run_resnet152(benchmarks)
+bench_i = 0
+for bench,bench_cmd in benchparams:
         
+    if args.check:
+        for mode in args.mode:
+            if mode == "full":
+                kernelnum = run_bench_with_param( bench,bench_cmd,bench_i )
+            elif mode in pattern_printorder:
+            #    print("WWWWWWWWWWWWWWWW",mode)
+                kernelnum = run_bench_with_sampled( bench,bench_cmd, mode,bench_i )
+        bench_i +=1
+    else:
+        run_bench_with_param(bench,bench_cmd)
+   
 def run_command(command):
     command.RunCommand()
+
 if not args.check:
     n_thread = args.n
     from multiprocessing import Pool
     with Pool(n_thread) as pool:
         pool.map(run_command,allcommands)
-#    print( allcommands )
 #    for command in allcommands:
 #        run_command(command)
-        
 
-for output_each_bench in output_all:
-    print( "\t".join(output_each_bench) )
+first_row = ["layers"]
+last_row = ["Sum"]
+print(patternvecs)
+for pattern in patternvecs:
+    if pattern == "full":
+        first_row += [ "MGPUSim-Simtime","MGPUSim-Walltime" ]
+    elif pattern == "kernelSampled":
+        first_row += [ "Kernel-Simtime","Kernel-Walltime" ]
+    elif pattern == "photon":
+        first_row += [ "Photon-Simtime","Photon-Walltime" ]
+    elif pattern == "warpKernelSampled":
+        first_row += [ "Warp+Kernel-Simtime","Warp+Kernel-Walltime" ]
+    simtime = simtimesum[pattern]
+    walltime = walltimesum[pattern]
+    last_row += [str(simtime),str(walltime)]
 
+print(first_row)
+
+print("\n#########Final Results\n")
+print("\t".join(first_row))
+for i, output_each_bench in enumerate( output_all ):
+    print( "layer%d\t"%i + "\t".join(output_each_bench) )
+
+print("\t".join(last_row))
 

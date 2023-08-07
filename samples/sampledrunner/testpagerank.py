@@ -6,7 +6,7 @@ benchmarks_test=["matrixmultiplication"]
 import os
 
 from sampledanalysis import ExecuteEngine
-from testengine import RunBench,add_bench,results_name,remove_special_charactor
+from testengine import RunBench,add_bench,results_name,remove_special_charactor,extend
 execute_engine = ExecuteEngine()
 benchmarks = dict()
 def run_bench_with_sampled(analysis_name):
@@ -180,6 +180,7 @@ if not args.check:
 #        run_command(command)
 first_row = ["benchmark-command"] + first_row
 print(first_row)
+print("\n#########Final Results\n")
 print("\t".join(first_row))
 for output_each_bench in output_all:
     print( "\t".join(output_each_bench) )

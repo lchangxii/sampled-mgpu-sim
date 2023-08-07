@@ -5,14 +5,7 @@ benchmarks_test=["matrixmultiplication"]
 #patterns_test=["matrixmultiplication"]
 import os
 
-from testengine import RunBench,add_bench,results_name,remove_special_charactor
-def extend(params_old):
-    params=[]
-    params.append( params_old[0] )
-    for idx in range(len(params_old)-1):
-        params.append( (params_old[idx+1]+params_old[idx])//2 )
-        params.append( params_old[idx+1] )
-    return params
+from testengine import RunBench,add_bench,results_name,remove_special_charactor,extend
 
 pattern_parameters_dict = dict()
 pattern_parameters_dict["ipcsampled"] = []
@@ -190,7 +183,10 @@ for bench,bench_cmds in benchmarks.items():
             if args.mode[0] != "all":
                 if pattern not in args.mode :
                     continue
-
+            #print(pattern)
+            if args.check:
+                if pattern == "inscount" or pattern == "analysis":
+                    continue
             for pattern_parameter in pattern_parameters_dict[pattern]:
                 final_name,cmd = add_bench( bench, bench_cmd,"",pattern_parameter,pattern )
                 final_name = os.path.join(result_dir,final_name)
@@ -227,10 +223,10 @@ for bench,bench_cmds in benchmarks.items():
                                 first_row += [ "MGPUSim-Simtime","MGPUSim-Walltime" ]
                             elif pattern == "branchsampled":
                                 first_row += [ "BB-Simtime","BB-Walltime" ]
-
                             elif pattern == "wgsampled":
                                 first_row += [ "Warp-Simtime","Warp-Walltime" ]
-
+                            elif pattern == "ipcsampled":
+                                first_row += [ "PKA-Simtime","PKA-Walltime" ]
                     if pattern not in ["inscount"]:
                         output_each_bench.append( str(simtime))
                         output_each_bench.append( str(walltime))

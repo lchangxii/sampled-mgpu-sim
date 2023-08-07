@@ -1,6 +1,14 @@
 import tempfile
 import copy
 import os
+def extend(params_old):
+    params=[]
+    params.append( params_old[0] )
+    for idx in range(len(params_old)-1):
+        params.append( (params_old[idx+1]+params_old[idx])//2 )
+        params.append( params_old[idx+1] )
+    return params
+
 class RunBench:
     def __init__(self,command,result_name,final_name,binary_dir):
         self.command = command
