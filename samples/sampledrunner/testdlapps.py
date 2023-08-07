@@ -44,7 +44,7 @@ def get_args():
     parser.add_argument("--bench",type=str   , default="vgg16",help=" benchmarks to execute, support vgg16,vgg19,resnet18,resnet32,resnet50,resnet101,resnet152")
     parser.add_argument("--arch",type=str   , default="r9nano",help="archtecture to simulate")
     parser.add_argument("--v",type=str   , default="0",help="version")
-    parser.add_argument("--n",type=int   , default=16,help="parallel workloads")
+    parser.add_argument("--n",type=int   , default=8,help="parallel workloads")
     args = parser.parse_args()
     if args.mode[0] == "all":
         for pattern in pattern_printorder:
