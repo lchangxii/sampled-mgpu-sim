@@ -92,7 +92,7 @@ def get_args():
 
     parser.add_argument("--check" ,action="store_true" , default=False,help=" check the final result")
     parser.add_argument("--force" ,action="store_true" , default=False,help=" force to execute")
-    parser.add_argument("--mode",type=str   ,nargs='+', default="all",help=" execution mode")
+    parser.add_argument("--mode",type=str   ,nargs='+', default=["all"],help=" execution mode")
     parser.add_argument("--bench",type=str   , default="all",help=" benchmarks to execute")
     parser.add_argument("--arch",type=str   , default="r9nano",help="archtecture to simulate")
     parser.add_argument("--v",type=str   , default="0",help="version")
