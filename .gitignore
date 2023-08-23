@@ -1,7 +1,3 @@
-maxpooling
-fulllayer
-avgpooling
-spmv_suit
 *.mtx
 *.pyc
 *.tar.gz
