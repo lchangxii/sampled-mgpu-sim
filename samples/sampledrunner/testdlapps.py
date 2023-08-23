@@ -185,6 +185,11 @@ output_all = []
 home_dir = os.getenv('HOME')
 #home_dir = Path.home()
 result_dir=os.path.join(home_dir,"gpudata")
+from my_utils import check_dir
+check_dir(result_dir)
+
+
+
 import tempfile
 class RunBench:
     def __init__(self,command,result_name,final_name,binary_dir):
