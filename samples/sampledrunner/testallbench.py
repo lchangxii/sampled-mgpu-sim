@@ -90,13 +90,13 @@ general_parameter=["-magic-memory-copy"]
 def get_args():
     parser = argparse.ArgumentParser(description="Executing All Benchmarks")
 
-    parser.add_argument("--check" ,action="store_true" , default=False,help=" check the final result")
-    parser.add_argument("--force" ,action="store_true" , default=False,help=" force to execute")
-    parser.add_argument("--mode",type=str   ,nargs='+', default=["all"],help=" execution mode")
-    parser.add_argument("--bench",type=str   , default="all",help=" benchmarks to execute")
-    parser.add_argument("--arch",type=str   , default="r9nano",help="archtecture to simulate")
-    parser.add_argument("--v",type=str   , default="0",help="version")
-    parser.add_argument("--n",type=int   , default=8,help="core number")
+    parser.add_argument("-check" ,action="store_true" , default=False,help=" check the final result")
+    parser.add_argument("-force" ,action="store_true" , default=False,help=" force to execute")
+    parser.add_argument("-mode",type=str   ,nargs='+', default=["all"],help=" execution mode")
+    parser.add_argument("-bench",type=str   , default="all",help=" benchmarks to execute")
+    parser.add_argument("-arch",type=str   , default="r9nano",help="archtecture to simulate")
+    parser.add_argument("-v",type=str   , default="0",help="version")
+    parser.add_argument("-n",type=int   , default=8,help="core number")
     args = parser.parse_args()
     return args
 
