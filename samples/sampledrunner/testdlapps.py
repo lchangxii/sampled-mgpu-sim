@@ -380,7 +380,7 @@ for bench,bench_cmd in benchparams:
                 kernelnum = run_bench_with_sampled( bench,bench_cmd, mode,bench_i )
         bench_i +=1
     else:
-        run_bench_with_param(bench,bench_cmd)
+        run_bench_with_param(bench,bench_cmd,bench_i)
    
 def run_command(command):
     command.RunCommand()
