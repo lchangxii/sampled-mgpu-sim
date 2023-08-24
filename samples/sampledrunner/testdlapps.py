@@ -47,7 +47,7 @@ def get_args():
     parser.add_argument("-n",type=int   , default=8,help="parallel workloads")
     args = parser.parse_args()
     if args.mode[0] == "all":
-        for pattern in pattern_printorder:
+        for pattern in pattern_order:
             mode2execute.add(pattern)
     else:
         for pattern in args.mode:
