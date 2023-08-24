@@ -410,16 +410,20 @@ for pattern in patternvecs:
         first_row += [ "Photon-Simtime","Photon-Walltime" ]
     elif pattern == "warpKernelSampled":
         first_row += [ "Warp+Kernel-Simtime","Warp+Kernel-Walltime" ]
-    simtime = simtimesum[pattern]
-    walltime = walltimesum[pattern]
+    if args.check:
+        simtime = simtimesum[pattern]
+        walltime = walltimesum[pattern]
+    else:
+        simtime = 0
+        walltime = 0
     last_row += [str(simtime),str(walltime)]
+if args.check:
+    print(first_row)
 
-print(first_row)
+    print("\n#########Final Results\n")
+    print("\t".join(first_row))
+    for i, output_each_bench in enumerate( output_all ):
+        print( "layer%d\t"%i + "\t".join(output_each_bench) )
 
-print("\n#########Final Results\n")
-print("\t".join(first_row))
-for i, output_each_bench in enumerate( output_all ):
-    print( "layer%d\t"%i + "\t".join(output_each_bench) )
-
-print("\t".join(last_row))
+    print("\t".join(last_row))
 
