@@ -282,11 +282,17 @@ def run_bench_with_param( bench,bench_cmd ,bench_i):
             else:
                 output_all[bench_i] += output_each_bench
 from sampledanalysis import ExecuteEngine
-execute_engine = ExecuteEngine()
+#execute_engine = ExecuteEngine()
+execute_engine_dict = dict()
+###execute engine for all patterns
+#pattern_printorder = ["full","kernelSampled","warpKernelSampled","photon"]
+for pattern in pattern_printorder:
+    execute_engine_dict[pattern] = ExecuteEngine()
+
 def run_bench_with_sampled( bench,bench_cmd,pattern,bench_i ):
     binary_dir=os.path.join(root_path,bench)
     os.chdir( binary_dir )
-
+    execute_engine = execute_engine_dict[pattern]
     pattern_parameter = pattern_parameters_dict["analysis"][0]
     analysis_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"analysis", args.v )
     analysis_name = os.path.join(result_dir, analysis_name)
