@@ -277,10 +277,11 @@ def run_bench_with_param( bench,bench_cmd ,bench_i):
                  #   exit(1)
                 if (not isExisting) or args.force:
                     run_cmd(cmd,results_name[pattern],final_name,binary_dir)
-            if len(output_all) <= bench_i:
-                output_all.append(output_each_bench)
-            else:
-                output_all[bench_i] += output_each_bench
+            if args.check and pattern == "full":
+                if len(output_all) <= bench_i:
+                    output_all.append(output_each_bench)
+                else:
+                    output_all[bench_i] += output_each_bench
 from sampledanalysis import ExecuteEngine
 #execute_engine = ExecuteEngine()
 execute_engine_dict = dict()
