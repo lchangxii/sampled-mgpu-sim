@@ -188,18 +188,18 @@ for bench,bench_cmds in benchmarks.items():
                 if pattern == "inscount" or pattern == "analysis":
                     continue
             for pattern_parameter in pattern_parameters_dict[pattern]:
-                final_name,cmd = add_bench( bench, bench_cmd,"",pattern_parameter,pattern )
+                final_name,cmd = add_bench( bench, bench_cmd,"",pattern_parameter,pattern,args.v )
                 final_name = os.path.join(result_dir,final_name)
                 if args.check:
 
                     if pattern == "ipcsampled" :
                         pattern_parameter = pattern_parameters_dict["inscount"][0]
-                        inscountfinal_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"inscount" )
+                        inscountfinal_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"inscount",args.v )
 
                         inscountfinal_name = os.path.join(result_dir,inscountfinal_name)        
 
                     elif pattern == "analysis":
-                        inscountfinal_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"full" )
+                        inscountfinal_name,_ = add_bench( bench, bench_cmd,"",pattern_parameter,"full",args.v )
                         inscountfinal_name = os.path.join(result_dir,inscountfinal_name)
 
                     else:

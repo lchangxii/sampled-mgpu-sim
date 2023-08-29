@@ -19,7 +19,7 @@ var BranchSampledFlag = flag.Bool("branch-sampled", false,
 	"Branch sampled machanism.")
 var BranchSampledThresholdFlag = flag.Float64("branch-sampled-coverage-threshold", 0.95,
 	"Branch sampled machanism coverage threshold.")
-var BranchSampledLeastSqureFlag = flag.Float64("branch-sampled-threshold", 0.03,
+var BranchSampledLeastSqureFlag = flag.Float64("branch-sampled-threshold", 0.01,
 	"Branch sampled machanism threshold.")
 
 type StaticComputeUnit interface {
