@@ -43,7 +43,7 @@ matmulparams=[4096,8192,16384,32768,65536]
 matmulparams=np.array(matmulparams)*8
 
 matmulparams=extend(matmulparams)
-for param in matmulparams:
+for param in matmulparams[:-1]:
    benchmarks["matrixmultiplication"].append( "./matrixmultiplication -x 64 -y 128 -z %s"%(param))
 
 benchmarks["aes"] = "./aes -length 409600"
@@ -257,5 +257,91 @@ if not args.check:
 print( "\t".join(first_row) )
 for output_each_bench in output_all:
     print( "\t".join(output_each_bench) )
+
+####export excel
+import copy
+from to_excel import export_excel
+
+if args.check and args.mode[0]=="all": ###only mode all export excel to use
+    excel_dir=os.path.join(root_path,"sampledrunner")
+    excel_export_base_path1 = os.path.join( home_dir , "artifact_evaluation")
+    excel_export_base_path= os.path.join( excel_export_base_path1 ,"micro2023_figures")
+    if not os.path.isdir( excel_export_base_path ):
+        print( "Please git clone micro2023_figures repo" )
+        print( "Run command \"git clone https://github.com/lchangxii/micro2023_figures.git\" in the directory \"%s\"."%excel_export_base_path1)
+        exit(1)
+    if args.arch == "r9nano":
+        excel_dir = os.path.join( excel_export_base_path, "r9nano" )
+        outputfile = "r9nano.xlsx"
+    else:
+        excel_dir = os.path.join( excel_export_base_path, "mi100" )
+        outputfile = "mi100.xlsx"
+    os.chdir( excel_dir )
+    
+
+
+    benchmarks = ["spmv","relu","matrix","aes","fir","conv"] 
+    columns = [ "problemsize","simtime",	"walltime", "mixsimtime", "mixwalltime", "wfsimtime","wfwalltime" ,"bbsimtime","bbwalltime", "pkasimtime","pkawalltime"]
+
+    problemsize = [
+            [ "128","192","256","384","512","768","1K" ], ##spmv
+            [ "4K","6K","8K","12K","16K","24K","32K","48K","64K"],##relu
+            ["4K","6K","8K","12K","16K","24K","32K","64K"],##matmul
+            ["512","768","1K","1.5K","2K","3K","4K","6K","8K"],
+            ["1K","1.5K","2K","3K","4K","6K","8K","12K","16K","40K","64K"],
+            ["4K","8K","16K","32K","64K"],
+            ]
+    bench2problemsize=dict()
+    for bench_i,bench in enumerate( benchmarks ):
+        bench2problemsize[bench] = problemsize[bench_i]
+    #"mixaccuracy", "mixspeedup",  "wferror","wfspeedup","bbaccuracy","bbspeedup", "pkaaccuracy","pkaspeedup"]
+    benchmark2data=dict()
+   #pattern_order = ["full","mixedsampled","wgsampled","branchsampled","inscount","ipcsampled","analysis"]
+    for bench in benchmarks:
+       benchmark2data[bench] = []
+    row_data = [ ]
+    for output in output_all:
+       ###bench name
+    #    print(output)
+        cmd = output[0]
+        benchname = "spmv"
+        for bench in benchmarks:
+            if bench in cmd:
+                benchname = bench
+                break
+     #   print(output)
+        output_raw = output[1:]
+      #  print(output_raw)
+        output_raw = [float(elem) for elem in output_raw]
+        row_data = copy.copy(output_raw)
+        benchmark2data[bench].append(row_data)
+    ##add problem size
+    for bench,data in benchmark2data.items():
+        problemsizes = bench2problemsize[bench]
+        #print (bench)
+        for problem_i, problem in enumerate( problemsizes):
+            data[problem_i] = [problem] + data[problem_i]
+##change matrix to matmul
+    benchmark2data["matmul"] = benchmark2data["matrix"]
+    del benchmark2data["matrix"]
+
+    export_excel( outputfile, benchmark2data, columns )
+
+    
+           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

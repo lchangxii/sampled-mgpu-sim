@@ -13,7 +13,7 @@ def normalize(v):
     for idx,elem in enumerate(v):
         newv[idx] = elem / norm
     return newv
-threshold = 0.1
+threshold = 0.05
 import numpy as np
 class GPUBBV:
     def __init__(self,bbveachwarp):

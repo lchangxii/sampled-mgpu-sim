@@ -406,7 +406,7 @@ if not args.check:
 #        run_command(command)
 
 first_row = ["layers"]
-last_row = ["Sum"]
+last_row = []
 print(patternvecs)
 for pattern in patternvecs:
     if pattern == "full":
@@ -432,5 +432,58 @@ if args.check:
     for i, output_each_bench in enumerate( output_all ):
         print( "layer%d\t"%i + "\t".join(output_each_bench) )
 
-    print("\t".join(last_row))
+    print( "Sum\t" + "\t".join(last_row))
+
+####export excel
+import copy
+from to_excel import export_excel
+
+if args.check and args.bench =="vgg16" and args.mode[0]=="all":
+    excel_dir=os.path.join(root_path,"sampledrunner")
+    excel_export_base_path1 = os.path.join( home_dir , "artifact_evaluation")
+    excel_export_base_path= os.path.join( excel_export_base_path1 ,"micro2023_figures")
+    if not os.path.isdir( excel_export_base_path ):
+        print( "Please git clone micro2023_figures repo" )
+        print( "Run command \"git clone https://github.com/lchangxii/micro2023_figures.git\" in the directory \"%s\"."%excel_export_base_path1)
+        exit(1)
+    excel_dir = os.path.join( excel_export_base_path, "vgg16" )
+    outputfile = "vgg16.xlsx"
+    os.chdir( excel_dir )
+    
+#pattern_printorder = ["full","kernelSampled","warpKernelSampled","photon"]
+    sheetnames = [ "kernellevel","wfkernel", "photon" ]
+    columns = ["benchmarks","simtime","walltime","sampledsimtime","sampledwalltime","abs-err","speedup"]
+    benchmarks = ["conv1-1","conv1-2","pool-1","conv2-1","conv2-2","conv2-3","pool-2","conv3-1","conv3-2","conv3-3","pool-3","conv4-1","conv4-2","conv4-3","pool-4","conv5-1","conv5-2","conv5-3","pool-5","fc-6","fc7","vgg16"]
+    sheet2data=dict()
+    for sheet in sheetnames:
+        sheet2data[sheet] =[]
+    indexes = [2,4,6]
+    output_all.append(last_row)
+    for output_each_bench_i,output_each_bench in enumerate(output_all):
+        output_each_bench = [float(elem) for elem in output_each_bench]
+        for index_i, index in enumerate(indexes):
+            data = output_each_bench[0:2]
+            data2 = output_each_bench[index:index+2]
+            error = (data[0] - data2[0])/data[0]*100
+            speedup = data[1] / data2[1]
+            final_data = [benchmarks[output_each_bench_i]]+data + data2 + [error,speedup]
+            sheet2data[ sheetnames[index_i]].append(copy.copy(final_data))
+
+    #print("\t".join(last_row))
+
+    export_excel( outputfile, sheet2data, columns )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
